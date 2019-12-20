@@ -318,7 +318,7 @@ func (self *JsonObject) Equal(v JsonValue) bool {
 		}
 		for k, v := range *self {
 			o, ok := (*other)[k]
-			if v == nil || o == nil {
+			if ok && (v == nil || o == nil) {
 				if v != o {
 					return false
 				}
