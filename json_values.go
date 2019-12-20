@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sort"
 )
 
 type JSONable interface {
@@ -350,9 +351,14 @@ func (self *JsonObject) Json() string {
 	if self == nil || *self == nil {
 		return "null"
 	}
-	var r []string
-	var v string
-	for k, o := range *self {
+	var r, keys []string
+	for k, _ := range *self {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		o := (*self)[k]
+		var v string
 		if o == nil {
 			v = fmt.Sprintf("%q: null", k)
 		} else {
