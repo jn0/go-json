@@ -3,6 +3,58 @@ package json
 import "testing"
 import "github.com/stretchr/testify/assert"
 
+import ( // for Example*
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
+	"time"
+)
+
+func BenchmarkAll(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < 1000; i++ {
+		ParseValue(source)
+	}
+}
+
+func ExampleUptime() {
+	// Suppose you have to feed some data to a monitor.
+	// The API makes you to use JSON.
+	// One of the monitored values is system uptime.
+
+	// Read the data from `procfs(5)` (or run `uptime(1)` and catch its output)
+	const uptime = "/proc/uptime"
+	data, err := ioutil.ReadFile(uptime)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ioutil.ReadFile(%+q): %v", uptime, err)
+		return // handle file access/read error here
+	}
+	// It should arrive as something like "3294591.50 12242861.60\n",
+	// where the first token is uptime (the 2nd one we wont use).
+
+	word := strings.Split(strings.TrimSpace(string(data)), " ")
+	if len(word) != 2 {
+		fmt.Fprintf(os.Stderr, "Garbage read from %+q: %v", uptime, data)
+		return // not much one can do if there is a "syntax error"...
+	}
+
+	// Use these values instead of "stable" fakes below
+	now := time.Now().UTC().Unix()
+	val := word[0]
+
+	now = 1576839878    // fake
+	val = "3295164.960" // fake
+
+	report := new(JsonObject)                  // The report.
+	report.Insert("time", NewJsonInt(now))     // Add time stamp.
+	report.Insert("uptime", NewJsonFloat(val)) // Add the value reported.
+
+	fmt.Println(report.Json()) // Produce JSON text...
+	// Output:
+	// { "time": 1576839878, "uptime": 3295164.960000 }
+}
+
 func TestPanics(t *testing.T) {
 	// json parsers do not panic.
 
@@ -845,11 +897,4 @@ func TestAll(t *testing.T) {
 		t.Errorf("%+q tail", tail)
 	}
 	t.Logf("%s", json.Json())
-}
-
-func BenchmarkAll(b *testing.B) {
-	b.ResetTimer()
-	for i := 0; i < 1000; i++ {
-		ParseValue(source)
-	}
 }

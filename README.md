@@ -12,7 +12,7 @@ The point is to have special types for JSON entities that boil down to
   - `JsonArray`
   - `JsonObject`
 
-[Benchmark](json_test.go#L850) gives
+[Benchmark](json_test.go#L14) gives
 
     goos: linux
     goarch: amd64
