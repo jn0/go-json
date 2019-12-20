@@ -2,6 +2,7 @@ package json
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -147,21 +148,38 @@ func parseArray(s string) (v JsonValue, t string, e error) {
 	return
 }
 func getString(s string) (pos int, res string, ok bool) {
-	escape, res := false, ""
+	escape, unicode, res, hex := false, false, "", ""
 	var c rune
 	for pos, c = range s[1:] {
+		if unicode {
+			hex += string(c)
+			if len(hex) == 4 {
+				v, e := strconv.ParseInt(hex, 16, 64)
+				if e != nil {
+					panic(e)
+				}
+				res += string(rune(v))
+				hex = ""
+				unicode = false
+			}
+			continue
+		}
 		if escape {
 			switch c {
-			case '"':
-				res += "\""
+			case 'b':
+				res += "\b"
+			case 'f':
+				res += "\f"
 			case 'n':
 				res += "\n"
 			case 'r':
 				res += "\r"
 			case 't':
 				res += "\t"
+			case 'u':
+				unicode = true
 			default:
-				res += string(c)
+				res += string(c) // slash, backslash, quote - relaxed...
 			}
 			escape = false
 			continue

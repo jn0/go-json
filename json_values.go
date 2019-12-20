@@ -8,9 +8,9 @@ package json
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 )
 
 type JSONable interface {

@@ -40,8 +40,8 @@ func ExampleUptime() {
 	}
 
 	// Use these values instead of "stable" fakes below
-	now := time.Now().UTC().Unix()	// an integer
-	val := word[0]			// a string (float will be parsed)
+	now := time.Now().UTC().Unix() // an integer
+	val := word[0]                 // a string (float will be parsed)
 
 	now = 1576839878    // fake
 	val = "3295164.960" // fake; still use string here, a "real" float would be ok too
@@ -78,6 +78,7 @@ func TestPanics(t *testing.T) {
 	assert.Panics(t, func() { s1.Set(123.123) }, "String.Set(Float)")
 	assert.Panics(t, func() { s1.Append("123") }, "String.Append()")
 	assert.Panics(t, func() { s1.Insert("xyz", "123") }, "String.Insert()")
+	assert.Panics(t, func() { s1.Parse(`"zzz\u123zzz"`) }, `String.Parse("\u123z")`)
 
 	a1 := new(JsonArray)
 	assert.Panics(t, func() { a1.Set(123.123) }, "Array.Set(Float)")
@@ -294,6 +295,7 @@ func TestParsers(t *testing.T) {
 	test(`xxx`, parseArray, erratic)
 
 	test(`"simple\nstring"`, parseString, clean)
+	test(`"\nstring\twith\rescapes\u005c\u002Fyepp"`, parseString, clean)
 	test(`	`, parseString, erratic)
 	test(`	"simple\nstring"	`, parseString, clean)
 	test(`	""	`, parseString, clean)
