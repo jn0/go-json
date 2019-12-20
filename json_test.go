@@ -40,11 +40,11 @@ func ExampleUptime() {
 	}
 
 	// Use these values instead of "stable" fakes below
-	now := time.Now().UTC().Unix()
-	val := word[0]
+	now := time.Now().UTC().Unix()	// an integer
+	val := word[0]			// a string (float will be parsed)
 
 	now = 1576839878    // fake
-	val = "3295164.960" // fake
+	val = "3295164.960" // fake; still use string here, a "real" float would be ok too
 
 	report := new(JsonObject)                  // The report.
 	report.Insert("time", NewJsonInt(now))     // Add time stamp.
