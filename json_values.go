@@ -25,12 +25,14 @@ type JsonValue interface {
 	Append(interface{})
 	Insert(string, interface{})
 	Equal(JsonValue) bool
+	IsNull() bool
 }
 
 /******************************************************************************/
 
 type JsonInt int
 
+func (self *JsonInt) IsNull() bool { return self == nil }
 func (self *JsonInt) Equal(v JsonValue) bool {
 	switch v.(type) {
 	case *JsonInt:
@@ -39,7 +41,7 @@ func (self *JsonInt) Equal(v JsonValue) bool {
 	return false
 }
 func (self *JsonInt) Json() string {
-	if self == nil {
+	if self.IsNull() {
 		return "null"
 	}
 	return fmt.Sprintf("%d", *self)
@@ -83,6 +85,7 @@ func NewJsonInt(v interface{}) *JsonInt { return new(JsonInt).Set(v).(*JsonInt) 
 /*----------------------------------------------------------------------------*/
 type JsonFloat float64
 
+func (self *JsonFloat) IsNull() bool { return self == nil }
 func (self *JsonFloat) Equal(v JsonValue) bool {
 	switch v.(type) {
 	case *JsonFloat:
@@ -91,7 +94,7 @@ func (self *JsonFloat) Equal(v JsonValue) bool {
 	return false
 }
 func (self *JsonFloat) Json() string {
-	if self == nil {
+	if self.IsNull() {
 		return "null"
 	}
 	return fmt.Sprintf("%f", *self)
@@ -134,6 +137,7 @@ var boolStringValues = map[string]bool{
 	"false": false,
 }
 
+func (self *JsonBool) IsNull() bool { return self == nil }
 func (self *JsonBool) Equal(v JsonValue) bool {
 	switch v.(type) {
 	case *JsonBool:
@@ -142,7 +146,7 @@ func (self *JsonBool) Equal(v JsonValue) bool {
 	return false
 }
 func (self *JsonBool) Json() string {
-	if self == nil {
+	if self.IsNull() {
 		return "null"
 	}
 	return fmt.Sprintf("%v", *self)
@@ -175,6 +179,7 @@ func NewJsonBool(v interface{}) *JsonBool { return new(JsonBool).Set(v).(*JsonBo
 /*----------------------------------------------------------------------------*/
 type JsonString string
 
+func (self *JsonString) IsNull() bool { return self == nil || (*self) == "" }
 func (self *JsonString) Equal(v JsonValue) bool {
 	switch v.(type) {
 	case *JsonString:
@@ -183,7 +188,7 @@ func (self *JsonString) Equal(v JsonValue) bool {
 	return false
 }
 func (self *JsonString) Json() string {
-	if self == nil || (*self) == "" {
+	if self.IsNull() {
 		return "null"
 	}
 	return fmt.Sprintf("%q", *self)
@@ -221,6 +226,7 @@ func NewJsonString(v interface{}) *JsonString { return new(JsonString).Set(v).(*
 
 type JsonArray []JsonValue
 
+func (self *JsonArray) IsNull() bool { return self == nil || (*self) == nil }
 func (self *JsonArray) Equal(v JsonValue) bool {
 	switch v.(type) {
 	case *JsonArray:
@@ -233,13 +239,19 @@ func (self *JsonArray) Equal(v JsonValue) bool {
 				return false
 			}
 		}
+		if *self == nil && *other == nil {
+			return true
+		}
 		if len(*self) != len(*other) {
 			return false
 		}
 		for i, v := range *self {
 			o := (*other)[i]
 			if v == nil || o == nil {
-				if v != o {
+				if v == nil && o != nil && !o.IsNull() {
+					return false
+				}
+				if o == nil && v != nil && !v.IsNull() {
 					return false
 				}
 				continue
@@ -253,7 +265,7 @@ func (self *JsonArray) Equal(v JsonValue) bool {
 	return false
 }
 func (self *JsonArray) Json() string {
-	if self == nil || *self == nil {
+	if self.IsNull() {
 		return "null"
 	}
 	var r []string
@@ -305,6 +317,7 @@ func NewJsonArray(v interface{}) *JsonArray { return new(JsonArray).Set(v).(*Jso
 /*----------------------------------------------------------------------------*/
 type JsonObject map[string]JsonValue
 
+func (self *JsonObject) IsNull() bool { return self == nil || (*self) == nil }
 func (self *JsonObject) Equal(v JsonValue) bool {
 	switch v.(type) {
 	case *JsonObject:

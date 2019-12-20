@@ -97,8 +97,12 @@ func TestValues(t *testing.T) {
 	var is = 12345
 	i1 := NewJsonInt(is)
 	i2 := new(JsonInt)
+	var i0 *JsonInt
+	if i0.Json() != "null" {
+		t.Errorf("int: %q != null", i0.Json())
+	}
 	if e := i2.Parse(i1.Json()); e != nil {
-		t.Errorf("string: Parse(%+q): %v", i1.Json(), e)
+		t.Errorf("int: Parse(%+q): %v", i1.Json(), e)
 	}
 	if !i1.Equal(i2) {
 		t.Errorf("int: !parse.Equal(json): %q != %q", i1.Json(), i2.Json())
@@ -112,7 +116,7 @@ func TestValues(t *testing.T) {
 		t.Errorf("int: !Equal(): %q != %q", i1.Json(), i2.Json())
 	}
 	i1.Set(int(12388))
-	i2.Set(int64(12388))
+	i2.Set(int16(12388))
 	if !i1.Equal(i2) {
 		t.Errorf("int: !Equal(): %q != %q", i1.Json(), i2.Json())
 	}
@@ -121,12 +125,27 @@ func TestValues(t *testing.T) {
 	if !i1.Equal(i2) {
 		t.Errorf("int: !Equal(): %q != %q", i1.Json(), i2.Json())
 	}
+	i1.Set(int64(111))
+	i2.Set(222)
+	if i1.Equal(i2) {
+		t.Errorf("int: Equal(): %q == %q", i1.Json(), i2.Json())
+	}
+	if i1.Equal(new(JsonFloat)) {
+		t.Errorf("int: Equal(): %q == Float", i1.Json())
+	}
 
+	var f0 *JsonFloat
+	if f0.Json() != "null" {
+		t.Errorf("float: %q != null", f0.Json())
+	}
 	var fs = -3.1
 	f1 := NewJsonFloat(fs)
 	f2 := new(JsonFloat)
 	if e := f2.Parse(f1.Json()); e != nil {
 		t.Errorf("string: Parse(%+q): %v", f1.Json(), e)
+	}
+	if f1.Equal(i1) {
+		t.Errorf("float: Equal(int): %q != %q", f1.Json(), i1.Json())
 	}
 	if !f1.Equal(f2) {
 		t.Errorf("float: !parse.Equal(json): %q != %q", f1.Json(), f2.Json())
@@ -147,7 +166,14 @@ func TestValues(t *testing.T) {
 		t.Logf("float: !Equal(): %q=%f != %q=%f (IT HAPPENS)",
 			f1.Json(), f1.Value(), f2.Json(), f2.Value())
 	}
+	if e := f2.Parse("asd"); e == nil {
+		t.Errorf("string: Parse(%+q): no error", "asd")
+	}
 
+	var b0 *JsonBool
+	if b0.Json() != "null" {
+		t.Errorf("float: %q != null", b0.Json())
+	}
 	var bs = true
 	b1 := NewJsonBool(bs)
 	b2 := new(JsonBool)
@@ -170,12 +196,22 @@ func TestValues(t *testing.T) {
 	if b1.Equal(b2) || !(b1.Value().(bool)) || (b2.Value().(bool)) {
 		t.Errorf("bool: Equal(): %q != %q", b1.Json(), b2.Json())
 	}
+	if b1.Equal(i1) {
+		t.Errorf("bool: Equal(Int): %q == %q", b1.Json(), i1.Json())
+	}
 
+	var s0 *JsonString
+	if s0.Json() != "null" {
+		t.Errorf("string: %q != null", s0.Json())
+	}
 	var ss = "some string"
 	s1 := NewJsonString(ss)
 	s2 := new(JsonString)
 	if e := s2.Parse(s1.Json()); e != nil {
 		t.Errorf("string: Parse(%+q): %v", s1.Json(), e)
+	}
+	if s1.Equal(i1) {
+		t.Errorf("string: Equal(Int): %q != %q", s1.Json(), i1.Json())
 	}
 	if !s1.Equal(s2) {
 		t.Errorf("string: !parse.Equal(json): %q != %q", s1.Json(), s2.Json())
@@ -195,13 +231,32 @@ func TestValues(t *testing.T) {
 	if !s1.Equal(s2) {
 		t.Errorf("string: !Equal(): %q != %q", s1.Json(), s2.Json())
 	}
+	if e := s2.Parse(`bad string`); e == nil {
+		t.Errorf("string: Parse(garbage) passed")
+	}
+	if e := s2.Parse(`"bad string"XXX`); e == nil {
+		t.Errorf(`string: Parse("string"garbage) passed`)
+	}
 
+	var a0, a2 *JsonArray
+	if a0.Json() != "null" {
+		t.Errorf("array: %q != null", a0.Json())
+	}
+	if !a0.Equal(a2) {
+		t.Errorf("array: %q != %q", a0.Json(), a2.Json())
+	}
 	var as = []JsonValue{i1, b1, s1, nil} // don't use floats! they aren't equal
 	a1 := NewJsonArray(as)
 	a1.Append(NewJsonInt(-35))
-	a2 := new(JsonArray)
+	a2 = new(JsonArray)
+	if a0.Equal(a2) {
+		t.Errorf("array: %q == %q", a0.Json(), a2.Json())
+	}
 	if e := a2.Parse(a1.Json()); e != nil {
 		t.Errorf("string: Parse(%+q): %v", a1.Json(), e)
+	}
+	if a1.Equal(i1) {
+		t.Errorf("array: %q != %q", a1.Json(), i1.Json())
 	}
 	if !a1.Equal(a2) {
 		t.Errorf("array: !parse.Equal(json): %q != %q", a1.Json(), a2.Json())
@@ -213,9 +268,14 @@ func TestValues(t *testing.T) {
 	if a1.Equal(a2) {
 		t.Errorf("array: Equal(): %q != %q", a1.Json(), a2.Json())
 	}
+	a1.Set([]JsonValue{i1, b1, s1, i0})
+	if a1.Equal(a2) {
+		t.Errorf("array: Equal(): %q != %q", a1.Json(), a2.Json())
+	}
 	if a1.Json() == a2.Json() {
 		t.Errorf("array: %q == %q", a1.Json(), a2.Json())
 	}
+	a1.Set(as)
 
 	var os = map[string]JsonValue{
 		"one":  i1,
@@ -232,6 +292,8 @@ func TestValues(t *testing.T) {
 		t.Errorf("string: Parse(%+q): %v", o1.Json(), e)
 	}
 	if !o1.Equal(o2) {
+		fmt.Println(o1.Json())
+		fmt.Println(o2.Json())
 		t.Errorf("object: !parse.Equal(json): %q != %q", o1.Json(), o2.Json())
 	}
 	o2.Insert("other", o1)
@@ -283,6 +345,9 @@ func TestParsers(t *testing.T) {
 	test(`{ "simple" `, parseObject, erratic)
 	test(`{ "simple": "bad object }`, parseObject, erratic)
 	test(`{ "simple": "bad object", }`, parseObject, erratic)
+	test(`{ "simple: bad object, }`, parseObject, erratic)
+	test(`{ "simple": "bad object",`, parseObject, erratic)
+	test(`{ "simple": "bad object" X`, parseObject, erratic)
 	test(`{ wrong: "object" }`, parseObject, erratic)
 
 	test(`	`, parseArray, erratic)
@@ -292,10 +357,12 @@ func TestParsers(t *testing.T) {
 	test(`[ null, "simple", false, "list", ]`, parseArray, erratic)
 	test(`[ null, "simple", false, "list",,,0 ]`, parseArray, erratic)
 	test(`[ null, "simple", false, "list"`, parseArray, erratic)
+	test(`[ null,`, parseArray, erratic)
+	test(`[ null XXX`, parseArray, erratic)
 	test(`xxx`, parseArray, erratic)
 
 	test(`"simple\nstring"`, parseString, clean)
-	test(`"\nstring\twith\rescapes\u005c\u002Fyepp"`, parseString, clean)
+	test(`"\nstring\twith\rescapes\u005c\u002Fyepp\backspace\formfeed"`, parseString, clean)
 	test(`	`, parseString, erratic)
 	test(`	"simple\nstring"	`, parseString, clean)
 	test(`	""	`, parseString, clean)
@@ -303,6 +370,7 @@ func TestParsers(t *testing.T) {
 	test(`"simple\nstring", 123`, parseString, taily)
 	test(`"simple wrong string`, parseString, erratic)
 	test(`"simple wrong string\"`, parseString, erratic)
+	test(`simple wrong string\"`, parseString, erratic)
 
 	test(``, parseNumber, erratic)
 	test(`		`, parseNumber, erratic)
