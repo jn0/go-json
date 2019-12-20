@@ -35,12 +35,12 @@ The `.Equal()` compares the two `JsonValue`s to be equal.
 
     goos: linux
     goarch: amd64
-    BenchmarkAll-4   	2000000000	         0.16 ns/op
+    BenchmarkAll-4   	2000000000	         0.18 ns/op
     PASS
     ok  	_/home/jno/src/go-json	4.935s
 
 on a *Intel(R) Core(TM) i5-6600 CPU @ 3.30GHz* box.
 
-coverage: 88.1% of statements
+coverage: 88.2% of statements
 
 # EOF #
