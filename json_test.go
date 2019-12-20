@@ -56,7 +56,7 @@ func ExampleUptime() {
 }
 
 func TestPanics(t *testing.T) {
-	// json parsers do not panic.
+	// The only parser that panics is parseString for wrong \uXXXX things.
 
 	i1 := new(JsonInt)
 	assert.Panics(t, func() { i1.Set(123.123) }, "Int.Set(Float)")
