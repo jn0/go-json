@@ -2,6 +2,8 @@
 
 My own approach to JSON in Go.
 
+See [example](json_test.go#L21) in [`json_test.go`](json_test.go) for an idea.
+
 The point is to have special types for JSON entities that boil down to
 [`JsonValue`](json_values.go#L19) type:
 
