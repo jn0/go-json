@@ -14,75 +14,142 @@ func TestValues(t *testing.T) {
 	var is = 12345
 	i1 := NewJsonInt(is)
 	i2 := new(JsonInt)
-	i2.Parse(i1.Json())
+	if e := i2.Parse(i1.Json()); e != nil {
+		t.Errorf("string: Parse(%+q): %v", i1.Json(), e)
+	}
 	if !i1.Equal(i2) {
-		t.Errorf("array: !parse.Equal(json): %q != %q", i1.Json(), i2.Json())
+		t.Errorf("int: !parse.Equal(json): %q != %q", i1.Json(), i2.Json())
 	}
 	if i1.Json() != i2.Json() {
-		t.Errorf("array: parse != json: %q != %q", i1.Json(), i2.Json())
+		t.Errorf("int: parse != json: %q != %q", i1.Json(), i2.Json())
+	}
+	i1.Set(int8(123))
+	i2.Set(int32(123))
+	if !i1.Equal(i2) {
+		t.Errorf("int: !Equal(): %q != %q", i1.Json(), i2.Json())
+	}
+	i1.Set(int(12388))
+	i2.Set(int64(12388))
+	if !i1.Equal(i2) {
+		t.Errorf("int: !Equal(): %q != %q", i1.Json(), i2.Json())
+	}
+	i1.Set(int(12399))
+	i2.Set("12399")
+	if !i1.Equal(i2) {
+		t.Errorf("int: !Equal(): %q != %q", i1.Json(), i2.Json())
 	}
 
 	var fs = -3.1
 	f1 := NewJsonFloat(fs)
 	f2 := new(JsonFloat)
-	f2.Parse(f1.Json())
+	if e := f2.Parse(f1.Json()); e != nil {
+		t.Errorf("string: Parse(%+q): %v", f1.Json(), e)
+	}
 	if !f1.Equal(f2) {
-		t.Errorf("array: !parse.Equal(json): %q != %q", f1.Json(), f2.Json())
+		t.Errorf("float: !parse.Equal(json): %q != %q", f1.Json(), f2.Json())
 	}
 	if f1.Json() != f2.Json() {
-		t.Errorf("array: parse != json: %q != %q", f1.Json(), f2.Json())
+		t.Errorf("float: parse != json: %q != %q", f1.Json(), f2.Json())
+	}
+	f1.Set(123.2)
+	f2.Set("123.2")
+	if !f1.Equal(f2) ||
+		f1.Value() != 123.2 || f2.Value() != 123.2 ||
+		f1.Value() != f2.Value() {
+		t.Errorf("float: !Equal(): %q != %q", f1.Json(), f2.Json())
+	}
+	f1.Set(float32(123.4))
+	f2.Set(float64(123.4))
+	if !f1.Equal(f2) {
+		t.Logf("float: !Equal(): %q=%f != %q=%f (IT HAPPENS)",
+			f1.Json(), f1.Value(), f2.Json(), f2.Value())
 	}
 
 	var bs = true
 	b1 := NewJsonBool(bs)
 	b2 := new(JsonBool)
-	b2.Parse(b1.Json())
-	if !b1.Equal(b2) {
-		t.Errorf("array: !parse.Equal(json): %q != %q", b1.Json(), b2.Json())
+	if e := b2.Parse(b1.Json()); e != nil {
+		t.Errorf("string: Parse(%+q): %v", b1.Json(), e)
+	}
+	if !b1.Equal(b2) || !(b1.Value().(bool)) || !(b2.Value().(bool)) {
+		t.Errorf("bool: !parse.Equal(json): %q != %q", b1.Json(), b2.Json())
 	}
 	if b1.Json() != b2.Json() {
-		t.Errorf("array: parse != json: %q != %q", b1.Json(), b2.Json())
+		t.Errorf("bool: parse != json: %q != %q", b1.Json(), b2.Json())
+	}
+	b1.Set(true)
+	b2.Set(!false)
+	if !b1.Equal(b2) || !(b1.Value().(bool)) || !(b2.Value().(bool)) {
+		t.Errorf("bool: !Equal(): %q != %q", b1.Json(), b2.Json())
+	}
+	b1.Set("true")
+	b2.Set("false")
+	if b1.Equal(b2) || !(b1.Value().(bool)) || (b2.Value().(bool)) {
+		t.Errorf("bool: Equal(): %q != %q", b1.Json(), b2.Json())
 	}
 
 	var ss = "some string"
 	s1 := NewJsonString(ss)
 	s2 := new(JsonString)
-	s2.Parse(s1.Json())
+	if e := s2.Parse(s1.Json()); e != nil {
+		t.Errorf("string: Parse(%+q): %v", s1.Json(), e)
+	}
 	if !s1.Equal(s2) {
-		t.Errorf("array: !parse.Equal(json): %q != %q", s1.Json(), s2.Json())
+		t.Errorf("string: !parse.Equal(json): %q != %q", s1.Json(), s2.Json())
 	}
 	if s1.Json() != s2.Json() {
-		t.Errorf("array: parse != json: %q != %q", s1.Json(), s2.Json())
+		t.Errorf("string: parse != json: %q != %q", s1.Json(), s2.Json())
+	}
+	if s1.Value() != ss {
+		t.Errorf("string: %q != %q", s1.Json(), ss)
+	}
+	s1.Set("string one")
+	s2.Set("string one")
+	if !s1.Equal(s2) {
+		t.Errorf("string: !Equal(): %q != %q", s1.Json(), s2.Json())
 	}
 
-
-	var as = []JsonValue{
-		NewJsonInt(123),
-		NewJsonString("asdasdasd"),
-		nil,
-	}
+	var as = []JsonValue{i1, b1, s1, nil} // don't use floats! they aren't equal
 	a1 := NewJsonArray(as)
-	a1.Append(NewJsonFloat(-3.5))
+	a1.Append(NewJsonInt(-35))
 	a2 := new(JsonArray)
-	a2.Parse(a1.Json())
+	if e := a2.Parse(a1.Json()); e != nil {
+		t.Errorf("string: Parse(%+q): %v", a1.Json(), e)
+	}
 	if !a1.Equal(a2) {
 		t.Errorf("array: !parse.Equal(json): %q != %q", a1.Json(), a2.Json())
 	}
 	if a1.Json() != a2.Json() {
 		t.Errorf("array: parse != json: %q != %q", a1.Json(), a2.Json())
 	}
+	a1.Append(NewJsonInt(999))
+	if a1.Equal(a2) {
+		t.Errorf("array: Equal(): %q != %q", a1.Json(), a2.Json())
+	}
+	if a1.Json() == a2.Json() {
+		t.Errorf("array: %q == %q", a1.Json(), a2.Json())
+	}
 
 	var os = map[string]JsonValue{
-		"one": NewJsonInt(123),
-		"two": NewJsonString("asdasdasd"),
+		"one":  i1,
+		"two":  s1,
 		"tree": nil,
+		"list": a1,
+		"bool": b1,
 	}
 	o1 := NewJsonObject(os)
-	o1.Insert("new", NewJsonFloat(-3.5))
+	o1.Insert("new", NewJsonInt(-35))
+	// o1.Insert("self", o1) // he-he...
 	o2 := new(JsonObject)
-	o2.Parse(o1.Json())
+	if e := o2.Parse(o1.Json()); e != nil {
+		t.Errorf("string: Parse(%+q): %v", o1.Json(), e)
+	}
 	if !o1.Equal(o2) {
-		t.Errorf("array: !parse.Equal(json): %q != %q", o1.Json(), o2.Json())
+		t.Errorf("object: !parse.Equal(json): %q != %q", o1.Json(), o2.Json())
+	}
+	o2.Insert("other", o1)
+	if o1.Equal(o2) {
+		t.Errorf("object: Equal(): %q != %q", o1.Json(), o2.Json())
 	}
 
 }
@@ -91,15 +158,19 @@ func TestParsers(t *testing.T) {
 
 	test := func(
 		s string,
-		f func (string) (JsonValue, string, error),
+		f func(string) (JsonValue, string, error),
 		eval func(JsonValue, string, error) bool,
 	) {
 		v, tail, err := f(s)
 		ok := eval(v, tail, err)
 		x := t.Logf
-		if !ok { x = t.Errorf }
+		if !ok {
+			x = t.Errorf
+		}
 		o := ""
-		if v != nil { o = v.Json() }
+		if v != nil {
+			o = v.Json()
+		}
 		x("s=%q (v=%#v=%s tail=%#v err=%#v) ok=%v", s, v, o, tail, err, ok)
 	}
 
@@ -107,29 +178,48 @@ func TestParsers(t *testing.T) {
 	erratic := func(v JsonValue, t string, e error) bool { return e != nil }
 	notail := func(v JsonValue, t string, e error) bool { return t == "" }
 	taily := func(v JsonValue, t string, e error) bool { return t != "" }
-	clean := func(v JsonValue, t string, e error) bool { return noerr(v,t,e) && notail(v,t,e) }
+	clean := func(v JsonValue, t string, e error) bool { return noerr(v, t, e) && notail(v, t, e) }
 
+	test(`bad`, parseObject, erratic)
+	test(`	bad	`, parseObject, erratic)
+	test(`	`, parseObject, erratic)
 	test(`{ "simple": "object" }`, parseObject, clean)
+	test(` 	{	"simple"	:	"object"	}	`, parseObject, clean)
 	test(`{ "simple": "object" }, 1`, parseObject, taily)
+	test(`{ "": "object" }, 1`, parseObject, taily)
+	test(`{ "simple": "" }, 1`, parseObject, taily)
 	test(`{ "better": "object", "one": 1, "null": null, "neg": -2.5 }`, parseObject, clean)
 	test(`{ "simple" = "bad object"}`, parseObject, erratic)
 	test(`{ "simple": "bad object"`, parseObject, erratic)
+	test(`{ "simple": }`, parseObject, erratic)
+	test(`{ "simple": `, parseObject, erratic)
+	test(`{ "simple" `, parseObject, erratic)
 	test(`{ "simple": "bad object }`, parseObject, erratic)
 	test(`{ "simple": "bad object", }`, parseObject, erratic)
 	test(`{ wrong: "object" }`, parseObject, erratic)
 
+	test(`	`, parseArray, erratic)
+	test(`	[	1,	"simple",    true,    "list"	]	`, parseArray, clean)
 	test(`[ 1, "simple", true, "list" ]`, parseArray, clean)
 	test(`  [ 1, "simple", true, "list" ], "tail"`, parseArray, taily)
 	test(`[ null, "simple", false, "list", ]`, parseArray, erratic)
 	test(`[ null, "simple", false, "list",,,0 ]`, parseArray, erratic)
 	test(`[ null, "simple", false, "list"`, parseArray, erratic)
+	test(`xxx`, parseArray, erratic)
 
 	test(`"simple\nstring"`, parseString, clean)
+	test(`	`, parseString, erratic)
+	test(`	"simple\nstring"	`, parseString, clean)
+	test(`	""	`, parseString, clean)
+	test(`	" 		 "  	`, parseString, clean)
 	test(`"simple\nstring", 123`, parseString, taily)
 	test(`"simple wrong string`, parseString, erratic)
 	test(`"simple wrong string\"`, parseString, erratic)
 
+	test(``, parseNumber, erratic)
+	test(`		`, parseNumber, erratic)
 	test(`123`, parseNumber, clean)
+	test(`	  123  	`, parseNumber, clean)
 	test(`0123`, parseNumber, clean)
 	test(`0123.03210`, parseNumber, clean)
 	test(`+0123.03210`, parseNumber, clean)
@@ -142,20 +232,27 @@ func TestParsers(t *testing.T) {
 	test(`-321.`, parseNumber, clean)
 
 	test(`true`, parseBool, clean)
+	test(`	`, parseBool, erratic)
+	test(` xxxx	`, parseBool, erratic)
 	test(`false`, parseBool, clean)
 	test(`true,xxx`, parseBool, taily)
 	test(`trUe`, parseBool, erratic)
 
 	test(`null`, parseNull, clean)
+	test(`	`, parseNull, erratic)
+	test(`  xxx  `, parseNull, erratic)
 	test(`null,`, parseNull, taily)
 	test(`nUll`, parseNull, erratic)
-	
+
 	test(`null`, ParseValue, clean)
 	test(`{ "not": [{ "so": "simple" }, "object"] }`, ParseValue, clean)
 	test(`[ 1, "simple", [ true, "list" ], null, -2.5 ]`, ParseValue, clean)
 	test(`"simple\nstring"`, ParseValue, clean)
 	test(`+0123.03210`, ParseValue, clean)
 	test(`false`, ParseValue, clean)
+	test(`  xxx  `, ParseValue, erratic)
+	test(`	false	`, ParseValue, clean)
+	test(`	`, ParseValue, erratic)
 }
 
 const source = `
@@ -724,4 +821,3 @@ func BenchmarkAll(b *testing.B) {
 		ParseValue(source)
 	}
 }
-

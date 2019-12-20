@@ -6,6 +6,7 @@ import (
 )
 
 type SyntaxError error
+type NoValue SyntaxError
 type BadValue SyntaxError
 type BadTail SyntaxError
 type MissedValue SyntaxError
@@ -29,8 +30,10 @@ func isDigit(c byte) bool {
 }
 
 func parseObject(s string) (v JsonValue, t string, e error) {
+	s = strings.TrimSpace(s)
 	if s == "" {
-		return // null?
+		e = NoValue(fmt.Errorf("No value for object"))
+		return
 	}
 	if s[0] != '{' {
 		t = s
@@ -42,29 +45,35 @@ func parseObject(s string) (v JsonValue, t string, e error) {
 	ok := false
 	for t != "" {
 		if t[0] != '"' {
-			e = BadTail(fmt.Errorf("%+q bad name at '%c'", t, t[0]))
+			e = SyntaxError(fmt.Errorf("%+q bad name at '%c'", t, t[0]))
 			return
 		}
 		xi, name, sok := getString(t)
 		if !sok {
-			e = BadTail(fmt.Errorf("Bad name %+q at %+q", name, t))
+			e = SyntaxError(fmt.Errorf("Bad name %+q at %+q", name, t))
 			return
 		}
+
 		t = strings.TrimSpace(t[xi+2:])
 		if t == "" || t[0] != ':' {
-			e = BadTail(fmt.Errorf("%+q no colon after name", t))
+			e = SyntaxError(fmt.Errorf("%+q no colon after name %q", t, name))
 			return
 		}
+
 		t = strings.TrimSpace(t[1:])
+		if t == "" {
+			e = SyntaxError(fmt.Errorf("%+q no value for name %q", t, name))
+			return
+		}
 		xv, xt, xe := ParseValue(t)
 		if xe != nil {
 			e = xe
 			t = xt
 			return
 		}
-		t = strings.TrimSpace(xt)
-		// fmt.Println("v=", v, "name=", name, "xv=", xv)
 		v.Insert(name, xv)
+
+		t = strings.TrimSpace(xt)
 		if t == "" {
 			break
 		}
@@ -90,8 +99,10 @@ func parseObject(s string) (v JsonValue, t string, e error) {
 	return
 }
 func parseArray(s string) (v JsonValue, t string, e error) {
+	s = strings.TrimSpace(s)
 	if s == "" {
-		return // null?
+		e = NoValue(fmt.Errorf("No value for array"))
+		return
 	}
 	if s[0] != '[' {
 		t = s
@@ -108,8 +119,9 @@ func parseArray(s string) (v JsonValue, t string, e error) {
 			t = xt
 			return
 		}
-		t = strings.TrimSpace(xt)
 		v.Append(xv)
+
+		t = strings.TrimSpace(xt)
 		if t == "" {
 			break
 		}
@@ -167,8 +179,10 @@ func getString(s string) (pos int, res string, ok bool) {
 	return
 }
 func parseString(s string) (v JsonValue, t string, e error) {
+	s = strings.TrimSpace(s)
 	if s == "" {
-		return // null?
+		e = NoValue(fmt.Errorf("No value for string"))
+		return
 	}
 	if s[0] != '"' {
 		e = SyntaxError(fmt.Errorf("Not a string %+q", s))
@@ -185,8 +199,10 @@ func parseString(s string) (v JsonValue, t string, e error) {
 	return
 }
 func parseNumber(s string) (v JsonValue, t string, e error) {
+	s = strings.TrimSpace(s)
 	if s == "" {
-		return // null?
+		e = NoValue(fmt.Errorf("No value for number"))
+		return
 	}
 	isFloat := false
 	intPart := ""
@@ -218,6 +234,11 @@ func parseNumber(s string) (v JsonValue, t string, e error) {
 	return
 }
 func parseBool(s string) (v JsonValue, t string, e error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		e = NoValue(fmt.Errorf("No value for bool"))
+		return
+	}
 	if strings.HasPrefix(s, "true") {
 		v = new(JsonBool)
 		v.Set(true)
@@ -233,6 +254,11 @@ func parseBool(s string) (v JsonValue, t string, e error) {
 	return nil, s, BadValue(fmt.Errorf("%+q is neither 'true' nor 'false'", s))
 }
 func parseNull(s string) (v JsonValue, t string, e error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		e = NoValue(fmt.Errorf("No value for null"))
+		return
+	}
 	if strings.HasPrefix(s, "null") {
 		// v = new(JsonObject)
 		t = strings.TrimSpace(s[4:])
@@ -244,6 +270,7 @@ func parseNull(s string) (v JsonValue, t string, e error) {
 func ParseValue(s string) (v JsonValue, t string, e error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
+		e = NoValue(fmt.Errorf("No value at all"))
 		return
 	}
 	switch s[0] {

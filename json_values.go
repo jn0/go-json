@@ -19,7 +19,7 @@ type JSONable interface {
 type JsonValue interface {
 	JSONable
 	Value() interface{}
-	Set(interface{})
+	Set(interface{}) JsonValue
 	Parse(string) error
 	Append(interface{})
 	Insert(string, interface{})
@@ -43,19 +43,27 @@ func (self *JsonInt) Json() string {
 	}
 	return fmt.Sprintf("%d", *self)
 }
-func (self *JsonInt) Set(v interface{}) {
+func (self *JsonInt) Set(v interface{}) JsonValue {
 	var t int
 	switch iv := v.(type) {
 	case int:
 		t = iv
+	case int8:
+		t = int(v.(int8))
+	case int16:
+		t = int(v.(int16))
 	case int32:
 		t = int(v.(int32))
 	case int64:
 		t = int(v.(int64))
+	case string:
+		self.Parse(v.(string))
+		return self
 	default:
 		panic(v)
 	}
 	*self = (JsonInt)(t)
+	return self
 }
 func (self *JsonInt) Parse(s string) error {
 	v, e := strconv.ParseInt(s, 10, 64)
@@ -69,16 +77,7 @@ func (self *JsonInt) Value() interface{}    { return int(*self) }
 func (*JsonInt) Append(interface{})         { panic("Int is immutable") }
 func (*JsonInt) Insert(string, interface{}) { panic("Int is immutable") }
 
-func NewJsonInt(v interface{}) *JsonInt {
-	r := new(JsonInt)
-	switch v.(type) {
-	case string:
-		r.Parse(v.(string))
-	default:
-		r.Set(v)
-	}
-	return r
-}
+func NewJsonInt(v interface{}) *JsonInt { return new(JsonInt).Set(v).(*JsonInt) }
 
 /*----------------------------------------------------------------------------*/
 type JsonFloat float64
@@ -96,17 +95,21 @@ func (self *JsonFloat) Json() string {
 	}
 	return fmt.Sprintf("%f", *self)
 }
-func (self *JsonFloat) Set(v interface{}) {
+func (self *JsonFloat) Set(v interface{}) JsonValue {
 	var t float64
 	switch iv := v.(type) {
 	case float32:
 		t = float64(v.(float32))
 	case float64:
 		t = iv
+	case string:
+		self.Parse(v.(string))
+		return self
 	default:
 		panic(v)
 	}
 	*self = (JsonFloat)(t)
+	return self
 }
 func (self *JsonFloat) Value() interface{} { return float64(*self) }
 func (self *JsonFloat) Parse(s string) error {
@@ -120,19 +123,15 @@ func (self *JsonFloat) Parse(s string) error {
 func (*JsonFloat) Append(interface{})         { panic("Float is immutable") }
 func (*JsonFloat) Insert(string, interface{}) { panic("Float is immutable") }
 
-func NewJsonFloat(v interface{}) *JsonFloat {
-	r := new(JsonFloat)
-	switch v.(type) {
-	case string:
-		r.Parse(v.(string))
-	default:
-		r.Set(v)
-	}
-	return r
-}
+func NewJsonFloat(v interface{}) *JsonFloat { return new(JsonFloat).Set(v).(*JsonFloat) }
 
 /*----------------------------------------------------------------------------*/
 type JsonBool bool
+
+var boolStringValues = map[string]bool{
+	"true":  true,
+	"false": false,
+}
 
 func (self *JsonBool) Equal(v JsonValue) bool {
 	switch v.(type) {
@@ -147,12 +146,22 @@ func (self *JsonBool) Json() string {
 	}
 	return fmt.Sprintf("%v", *self)
 }
-func (self *JsonBool) Set(v interface{})  { *self = (JsonBool)(v.(bool)) }
-func (self *JsonBool) Value() interface{} { return *self }
+func (self *JsonBool) Set(v interface{}) JsonValue {
+	switch v.(type) {
+	case bool:
+		*self = (JsonBool)(v.(bool))
+	case string:
+		self.Parse(v.(string))
+	default:
+		panic(v)
+	}
+	return self
+}
+func (self *JsonBool) Value() interface{} { return bool(*self) }
 func (self *JsonBool) Parse(s string) error {
-	v, e := strconv.ParseBool(s)
-	if e != nil {
-		return e
+	v, found := boolStringValues[strings.ToLower(strings.TrimSpace(s))]
+	if !found {
+		panic(fmt.Sprintf("Bool: bad literal %+q", s))
 	}
 	self.Set(v)
 	return nil
@@ -160,16 +169,7 @@ func (self *JsonBool) Parse(s string) error {
 func (*JsonBool) Append(interface{})         { panic("Bool is immutable") }
 func (*JsonBool) Insert(string, interface{}) { panic("Bool is immutable") }
 
-func NewJsonBool(v interface{}) *JsonBool {
-	r := new(JsonBool)
-	switch v.(type) {
-	case string:
-		r.Parse(v.(string))
-	default:
-		r.Set(v)
-	}
-	return r
-}
+func NewJsonBool(v interface{}) *JsonBool { return new(JsonBool).Set(v).(*JsonBool) }
 
 /*----------------------------------------------------------------------------*/
 type JsonString string
@@ -187,7 +187,7 @@ func (self *JsonString) Json() string {
 	}
 	return fmt.Sprintf("%q", *self)
 }
-func (self *JsonString) Set(v interface{})  {
+func (self *JsonString) Set(v interface{}) JsonValue {
 	switch v.(type) {
 	case string:
 		*self = (JsonString)(v.(string))
@@ -197,8 +197,9 @@ func (self *JsonString) Set(v interface{})  {
 	default:
 		panic(fmt.Sprintf("cannot %T.Set(%T)", self, v))
 	}
+	return self
 }
-func (self *JsonString) Value() interface{} { return *self }
+func (self *JsonString) Value() interface{} { return string(*self) }
 func (self *JsonString) Parse(s string) error {
 	obj, tail, err := parseString(s)
 	if err != nil {
@@ -213,11 +214,7 @@ func (self *JsonString) Parse(s string) error {
 func (self *JsonString) Append(interface{})         { panic("String is immutable") }
 func (self *JsonString) Insert(string, interface{}) { panic("String is immutable") }
 
-func NewJsonString(v string) *JsonString {
-	r := new(JsonString)
-	r.Set(v)
-	return r
-}
+func NewJsonString(v interface{}) *JsonString { return new(JsonString).Set(v).(*JsonString) }
 
 /******************************************************************************/
 
@@ -268,7 +265,7 @@ func (self *JsonArray) Json() string {
 	}
 	return "[ " + strings.Join(r, ", ") + " ]"
 }
-func (self *JsonArray) Set(v interface{}) {
+func (self *JsonArray) Set(v interface{}) JsonValue {
 	switch v.(type) {
 	case *JsonArray:
 		*self = *(v.(*JsonArray))
@@ -279,6 +276,7 @@ func (self *JsonArray) Set(v interface{}) {
 	default:
 		panic("cannot")
 	}
+	return self
 }
 func (self *JsonArray) Value() interface{} { return *self }
 func (self *JsonArray) Parse(s string) error {
@@ -301,11 +299,7 @@ func (self *JsonArray) Append(v interface{}) {
 }
 func (*JsonArray) Insert(string, interface{}) { panic("arrays are not insertable") }
 
-func NewJsonArray(o []JsonValue) *JsonArray {
-	r := new(JsonArray)
-	r.Set(o)
-	return r
-}
+func NewJsonArray(v interface{}) *JsonArray { return new(JsonArray).Set(v).(*JsonArray) }
 
 /*----------------------------------------------------------------------------*/
 type JsonObject map[string]JsonValue
@@ -368,10 +362,11 @@ func (self *JsonObject) Json() string {
 	}
 	return "{ " + strings.Join(r, ", ") + " }"
 }
-func (self *JsonObject) Set(v interface{}) {
+func (self *JsonObject) Set(v interface{}) JsonValue {
 	*self = *(v.(*JsonObject))
+	return self
 }
-func (self *JsonObject) Value() interface{} { return *self }
+func (self *JsonObject) Value() interface{} { return map[string]JsonValue(*self) }
 func (self *JsonObject) Parse(s string) error {
 	obj, tail, err := parseObject(s)
 	if err != nil {
@@ -391,6 +386,12 @@ func (self *JsonObject) Insert(n string, v interface{}) {
 	if v == nil {
 		(*self)[n] = nil
 	} else {
+		switch v.(type) {
+		case *JsonObject:
+			if self == v.(*JsonObject) {
+				panic("Ooops!")
+			}
+		}
 		(*self)[n] = v.(JsonValue)
 	}
 }
