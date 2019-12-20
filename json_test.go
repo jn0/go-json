@@ -190,6 +190,10 @@ func TestValues(t *testing.T) {
 	if !s1.Equal(s2) {
 		t.Errorf("string: !Equal(): %q != %q", s1.Json(), s2.Json())
 	}
+	s2.Parse("\"string one\"")
+	if !s1.Equal(s2) {
+		t.Errorf("string: !Equal(): %q != %q", s1.Json(), s2.Json())
+	}
 
 	var as = []JsonValue{i1, b1, s1, nil} // don't use floats! they aren't equal
 	a1 := NewJsonArray(as)
