@@ -1,12 +1,42 @@
 package json
 
 import "testing"
+import "github.com/stretchr/testify/assert"
 
-func assert(t *testing.T, e error, s string, a ...interface{}) {
-	if e != nil {
-		a = append(a, e)
-		t.Fatalf(s+": %v", a...)
-	}
+func TestPanics(t *testing.T) {
+	// json parsers do not panic.
+
+	i1 := new(JsonInt)
+	assert.Panics(t, func() { i1.Set(123.123) }, "Int set to float")
+	assert.Panics(t, func() { i1.Append(123) }, "Int appened")
+	assert.Panics(t, func() { i1.Insert("xyz", 123) }, "Int inserted")
+
+	f1 := new(JsonFloat)
+	assert.Panics(t, func() { f1.Set(123) }, "Float set to int")
+	assert.Panics(t, func() { f1.Append(123.123) }, "Float appened")
+	assert.Panics(t, func() { f1.Insert("xyz", 123.123) }, "Float inserted")
+
+	b1 := new(JsonBool)
+	assert.Panics(t, func() { b1.Set(123.123) }, "Bool set to float")
+	assert.Panics(t, func() { b1.Parse("never") }, "Bool parsed shit")
+	assert.Panics(t, func() { b1.Append(true) }, "Bool appened")
+	assert.Panics(t, func() { b1.Insert("xyz", true) }, "Bool inserted")
+
+	s1 := new(JsonString)
+	assert.Panics(t, func() { s1.Set(123.123) }, "String set to float")
+	assert.Panics(t, func() { s1.Append("123") }, "String appened")
+	assert.Panics(t, func() { s1.Insert("xyz", "123") }, "String inserted")
+
+	a1 := new(JsonArray)
+	assert.Panics(t, func() { a1.Set(123.123) }, "Array set to float")
+	assert.Panics(t, func() { a1.Insert("xyz", 123) }, "Array inserted")
+
+	o1 := new(JsonObject)
+	assert.Panics(t, func() { o1.Set(123.123) }, "Object set to float")
+	assert.Panics(t, func() { o1.Append(123) }, "Object appened")
+	assert.Panics(t, func() { o1.Insert("xyz", o1) }, "Object looped")
+
+	t.Logf("All panics performed")
 }
 
 func TestValues(t *testing.T) {
@@ -808,9 +838,11 @@ const source = `
 
 func TestAll(t *testing.T) {
 	json, tail, err := ParseValue(source)
-	assert(t, err, "GetValue(%+q)", source)
+	if err != nil {
+		t.Errorf("GetValue(%+q): %v", source, err)
+	}
 	if tail != "" {
-		t.Fatalf("%+q tail", tail)
+		t.Errorf("%+q tail", tail)
 	}
 	t.Logf("%s", json.Json())
 }

@@ -12,6 +12,6 @@ The point is to have special types for JSON entities that boil down to
   - `JsonArray`
   - `JsonObject`
 
-coverage: 83.7% of statements
+coverage: 88.1% of statements
 
 # EOF #
