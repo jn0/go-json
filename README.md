@@ -27,9 +27,9 @@ method). The `.Set()` method accepts a "compatible" value or a `string`. The
 "compatibility" means that you can use either `float32` or `float64` as value
 for `JsonFloat` and so on. The `string`s are `.Parse()`d.
 
-The `.Value()` returns "unJSONed" version of that `JsonValue`.
+The `.Value()` returns "unJSONed" version of that `JsonValue` (type cast still needed).
 
-The `.Equal()` compares the two `JsonValue`s to be equal.
+The `.Equal()` compares the two `JsonValue`s to be equal and `.IsNull()` compares to zero-value.
 
 [Benchmark](json_test.go#L14) gives
 
