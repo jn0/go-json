@@ -32,11 +32,16 @@ type JsonValue interface {
 
 type JsonInt int
 
-func (self *JsonInt) IsNull() bool { return self == nil }
+func (self *JsonInt) IsNull() bool { return self == nil || self == (*JsonInt)(nil) }
 func (self *JsonInt) Equal(v JsonValue) bool {
 	switch v.(type) {
+	case nil:
+		return self.IsNull()
 	case *JsonInt:
-		return self.Value() == v.(*JsonInt).Value()
+		if v.(*JsonInt).IsNull() {
+			return self.IsNull()
+		}
+		return !self.IsNull() && self.Value() == v.(*JsonInt).Value()
 	}
 	return false
 }
@@ -88,8 +93,13 @@ type JsonFloat float64
 func (self *JsonFloat) IsNull() bool { return self == nil }
 func (self *JsonFloat) Equal(v JsonValue) bool {
 	switch v.(type) {
+	case nil:
+		return self.IsNull()
 	case *JsonFloat:
-		return self.Value() == v.(*JsonFloat).Value()
+		if v.(*JsonFloat).IsNull() {
+			return self.IsNull()
+		}
+		return !self.IsNull() && self.Value() == v.(*JsonFloat).Value()
 	}
 	return false
 }
@@ -140,8 +150,13 @@ var boolStringValues = map[string]bool{
 func (self *JsonBool) IsNull() bool { return self == nil }
 func (self *JsonBool) Equal(v JsonValue) bool {
 	switch v.(type) {
+	case nil:
+		return self.IsNull()
 	case *JsonBool:
-		return self.Value() == v.(*JsonBool).Value()
+		if v.(*JsonBool).IsNull() {
+			return self.IsNull()
+		}
+		return !self.IsNull() && self.Value() == v.(*JsonBool).Value()
 	}
 	return false
 }
@@ -182,8 +197,13 @@ type JsonString string
 func (self *JsonString) IsNull() bool { return self == nil || (*self) == "" }
 func (self *JsonString) Equal(v JsonValue) bool {
 	switch v.(type) {
+	case nil:
+		return self.IsNull()
 	case *JsonString:
-		return self.Value() == v.(*JsonString).Value()
+		if v.(*JsonString).IsNull() {
+			return self.IsNull()
+		}
+		return !self.IsNull() && self.Value() == v.(*JsonString).Value()
 	}
 	return false
 }
@@ -229,12 +249,14 @@ type JsonArray []JsonValue
 func (self *JsonArray) IsNull() bool { return self == nil || (*self) == nil }
 func (self *JsonArray) Equal(v JsonValue) bool {
 	switch v.(type) {
+	case nil:
+		return self.IsNull()
 	case *JsonArray:
 		var other *JsonArray = v.(*JsonArray)
-		if self.IsNull() && other.IsNull() {
-			return true
+		if other.IsNull() {
+			return self.IsNull()
 		}
-		if self.IsNull() || other.IsNull() {
+		if self.IsNull() {
 			return false
 		}
 		if len(*self) != len(*other) {
@@ -332,12 +354,14 @@ func cmpMap(m1, m2 map[string]JsonValue) bool {
 
 func (self *JsonObject) Equal(v JsonValue) bool {
 	switch v.(type) {
+	case nil:
+		return self.IsNull()
 	case *JsonObject:
 		var other *JsonObject = v.(*JsonObject)
-		if self.IsNull() && other.IsNull() {
-			return true
+		if other.IsNull() {
+			return self.IsNull()
 		}
-		if self.IsNull() || other.IsNull() {
+		if self.IsNull() {
 			return false
 		}
 		if cmpMap(*self, *other) && cmpMap(*other, *self) {

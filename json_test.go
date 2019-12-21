@@ -98,6 +98,15 @@ func TestValues(t *testing.T) {
 	i1 := NewJsonInt(is)
 	i2 := new(JsonInt)
 	var i0 *JsonInt
+	if !i0.Equal(nil) {
+		t.Errorf("int: %q != nil", i0.Json())
+	}
+	if i2.Equal(i0) {
+		t.Errorf("int: %q == ?(nil) = %q", i0.Json(), i2.Json())
+	}
+	if i0.Equal(i2) {
+		t.Errorf("int: %q == T(nil) = %q", i0.Json(), i2.Json())
+	}
 	if i0.Json() != "null" {
 		t.Errorf("int: %q != null", i0.Json())
 	}
@@ -135,12 +144,21 @@ func TestValues(t *testing.T) {
 	}
 
 	var f0 *JsonFloat
+	f2 := new(JsonFloat)
+	if !f0.Equal(nil) {
+		t.Errorf("float: %q != nil", f0.Json())
+	}
+	if f2.Equal(f0) {
+		t.Errorf("float: %q == ?(nil) = %q", f0.Json(), f2.Json())
+	}
+	if f0.Equal(f2) {
+		t.Errorf("float: %q == T(nil) = %q", f0.Json(), f2.Json())
+	}
 	if f0.Json() != "null" {
 		t.Errorf("float: %q != null", f0.Json())
 	}
 	var fs = -3.1
 	f1 := NewJsonFloat(fs)
-	f2 := new(JsonFloat)
 	if e := f2.Parse(f1.Json()); e != nil {
 		t.Errorf("string: Parse(%+q): %v", f1.Json(), e)
 	}
@@ -171,12 +189,21 @@ func TestValues(t *testing.T) {
 	}
 
 	var b0 *JsonBool
+	b2 := new(JsonBool)
+	if !b0.Equal(nil) {
+		t.Errorf("bool: %q != nil", b0.Json())
+	}
+	if b2.Equal(b0) {
+		t.Errorf("bool: %q == ?(nil) = %q", b0.Json(), b2.Json())
+	}
+	if b0.Equal(b2) {
+		t.Errorf("bool: %q == T(nil) = %q", b0.Json(), b2.Json())
+	}
 	if b0.Json() != "null" {
 		t.Errorf("float: %q != null", b0.Json())
 	}
 	var bs = true
 	b1 := NewJsonBool(bs)
-	b2 := new(JsonBool)
 	if e := b2.Parse(b1.Json()); e != nil {
 		t.Errorf("string: Parse(%+q): %v", b1.Json(), e)
 	}
@@ -201,12 +228,21 @@ func TestValues(t *testing.T) {
 	}
 
 	var s0 *JsonString
+	s2 := new(JsonString)
+	if !s0.Equal(nil) {
+		t.Errorf("string: %q != nil", s0.Json())
+	}
+	if !s2.Equal(s0) {
+		t.Errorf("string: %q != ?(nil) = %q", s0.Json(), s2.Json())
+	}
+	if !s0.Equal(s2) {
+		t.Errorf("string: %q != T(nil) = %q", s0.Json(), s2.Json())
+	}
 	if s0.Json() != "null" {
 		t.Errorf("string: %q != null", s0.Json())
 	}
 	var ss = "some string"
 	s1 := NewJsonString(ss)
-	s2 := new(JsonString)
 	if e := s2.Parse(s1.Json()); e != nil {
 		t.Errorf("string: Parse(%+q): %v", s1.Json(), e)
 	}
@@ -239,6 +275,15 @@ func TestValues(t *testing.T) {
 	}
 
 	var a0, a2 *JsonArray
+	if !a0.Equal(nil) {
+		t.Errorf("array: %q != nil", a0.Json())
+	}
+	if !a2.Equal(a0) {
+		t.Errorf("array: %q != ?(nil) = %q", a0.Json(), a2.Json())
+	}
+	if !a0.Equal(a2) {
+		t.Errorf("array: %q != T(nil) = %q", a0.Json(), a2.Json())
+	}
 	if a0.Json() != "null" {
 		t.Errorf("array: %q != null", a0.Json())
 	}
@@ -324,10 +369,19 @@ func TestValues(t *testing.T) {
 		"bool": b1,
 	}
 	var o0 *JsonObject
+	o2 := new(JsonObject)
+	if !o0.Equal(nil) {
+		t.Errorf("object: %q != nil", o0.Json())
+	}
+	if !o2.Equal(o0) {
+		t.Errorf("object: %q != ?(nil) = %q", o0.Json(), o2.Json())
+	}
+	if !o0.Equal(o2) {
+		t.Errorf("object: %q != T(nil) = %q", o0.Json(), o2.Json())
+	}
 	o1 := NewJsonObject(os)
 	o1.Value()
 	// o1.Insert("self", o1) // he-he...
-	o2 := new(JsonObject)
 	if !o2.IsNull() {
 		t.Errorf("object: not (%+q).IsNull()", o2.Json())
 	}
