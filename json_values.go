@@ -231,30 +231,22 @@ func (self *JsonArray) Equal(v JsonValue) bool {
 	switch v.(type) {
 	case *JsonArray:
 		var other *JsonArray = v.(*JsonArray)
-		if self == nil && other == nil {
+		if self.IsNull() && other.IsNull() {
 			return true
 		}
-		if self == nil || other == nil {
-			if self != other {
-				return false
-			}
-		}
-		if *self == nil && *other == nil {
-			return true
+		if self.IsNull() || other.IsNull() {
+			return false
 		}
 		if len(*self) != len(*other) {
 			return false
 		}
 		for i, v := range *self {
 			o := (*other)[i]
-			if v == nil || o == nil {
-				if v == nil && o != nil && !o.IsNull() {
-					return false
-				}
-				if o == nil && v != nil && !v.IsNull() {
-					return false
-				}
+			if (v == nil || v.IsNull()) && (o == nil || o.IsNull()) {
 				continue
+			}
+			if v == nil || o == nil {
+				return false
 			}
 			if !v.Equal(o) {
 				return false
@@ -318,45 +310,39 @@ func NewJsonArray(v interface{}) *JsonArray { return new(JsonArray).Set(v).(*Jso
 type JsonObject map[string]JsonValue
 
 func (self *JsonObject) IsNull() bool { return self == nil || (*self) == nil }
+
+func cmpMap(m1, m2 map[string]JsonValue) bool {
+	if len(m1) != len(m2) {
+		return false
+	}
+	for k, v := range m1 {
+		o, ok := m2[k]
+		if !ok {
+			return false
+		}
+		if (v == nil || v.IsNull()) && (o == nil || o.IsNull()) {
+			continue
+		}
+		if !v.Equal(o) {
+			return false
+		}
+	}
+	return true
+}
+
 func (self *JsonObject) Equal(v JsonValue) bool {
 	switch v.(type) {
 	case *JsonObject:
 		var other *JsonObject = v.(*JsonObject)
-		if self == nil && other == nil {
+		if self.IsNull() && other.IsNull() {
 			return true
 		}
-		if self == nil || other == nil {
-			if self != other {
-				return false
-			}
+		if self.IsNull() || other.IsNull() {
+			return false
 		}
-		for k, v := range *self {
-			o, ok := (*other)[k]
-			if ok && (v == nil || o == nil) {
-				if v != o {
-					return false
-				}
-				continue
-			}
-			ok = ok && v.Equal(o)
-			if !ok {
-				return false
-			}
+		if cmpMap(*self, *other) && cmpMap(*other, *self) {
+			return true
 		}
-		for k, v := range *other {
-			o, ok := (*self)[k]
-			if v == nil || o == nil {
-				if v != o {
-					return false
-				}
-				continue
-			}
-			ok = ok && v.Equal(o)
-			if !ok {
-				return false
-			}
-		}
-		return true
 	}
 	return false
 }
@@ -382,7 +368,20 @@ func (self *JsonObject) Json() string {
 	return "{ " + strings.Join(r, ", ") + " }"
 }
 func (self *JsonObject) Set(v interface{}) JsonValue {
-	*self = *(v.(*JsonObject))
+	switch v.(type) {
+	case *JsonObject:
+		*self = *(v.(*JsonObject))
+	case JsonObject:
+		*self = v.(JsonObject)
+	case map[string]JsonValue:
+		*self = nil
+		*self = make(map[string]JsonValue)
+		for k, v := range v.(map[string]JsonValue) {
+			self.Insert(k, v)
+		}
+	default:
+		panic(v)
+	}
 	return self
 }
 func (self *JsonObject) Value() interface{} { return map[string]JsonValue(*self) }

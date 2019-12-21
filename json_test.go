@@ -249,7 +249,15 @@ func TestValues(t *testing.T) {
 	a1 := NewJsonArray(as)
 	a1.Append(NewJsonInt(-35))
 	a2 = new(JsonArray)
-	if a0.Equal(a2) {
+	if a0.Equal(a1) {
+		t.Errorf("array: %q == %q", a0.Json(), a1.Json())
+	}
+	if !a0.Equal(a2) {
+		t.Errorf("array: %q != %q", a0.Json(), a2.Json())
+	}
+	a1.Value()
+	a0 = new(JsonArray)
+	if !a0.Equal(a2) {
 		t.Errorf("array: %q == %q", a0.Json(), a2.Json())
 	}
 	if e := a2.Parse(a1.Json()); e != nil {
@@ -270,10 +278,41 @@ func TestValues(t *testing.T) {
 	}
 	a1.Set([]JsonValue{i1, b1, s1, i0})
 	if a1.Equal(a2) {
-		t.Errorf("array: Equal(): %q != %q", a1.Json(), a2.Json())
+		t.Errorf("array: Equal(): %q == %q", a1.Json(), a2.Json())
+	}
+	a1.Set([]JsonValue{i1, b1, s1, nil})
+	if a1.Equal(a2) {
+		t.Errorf("array: Equal(): %q == %q", a1.Json(), a2.Json())
 	}
 	if a1.Json() == a2.Json() {
 		t.Errorf("array: %q == %q", a1.Json(), a2.Json())
+	}
+	a1 = NewJsonArray([]JsonValue{i1, b1, s1, i1})
+	a2 = NewJsonArray([]JsonValue{i1, b1, s1, i2})
+	if a1.Equal(a2) {
+		fmt.Println(a1.Json())
+		fmt.Println(a2.Json())
+		t.Errorf("array: Equal(): %q == %q", a1.Json(), a2.Json())
+	}
+	a1 = NewJsonArray([]JsonValue{i1, b1, s1, i2})
+	a2 = NewJsonArray([]JsonValue{i1, b1, s1, nil})
+	if a1.Equal(a2) {
+		fmt.Println(a1.Json())
+		fmt.Println(a2.Json())
+		t.Errorf("array: Equal(): %q == %q", a1.Json(), a2.Json())
+	}
+	a1 = NewJsonArray([]JsonValue{i1, b1, s1, i0})
+	a2 = NewJsonArray([]JsonValue{i1, b1, s1, nil})
+	if !a1.Equal(a2) {
+		fmt.Println(a1.Json())
+		fmt.Println(a2.Json())
+		t.Errorf("array: Equal(): %q != %q", a1.Json(), a2.Json())
+	}
+	if e := a0.Parse(`[x]`); e == nil {
+		t.Errorf("array: Parse(): no error")
+	}
+	if e := a0.Parse(`[0],`); e == nil {
+		t.Errorf("array: Parse(): no error")
 	}
 	a1.Set(as)
 
@@ -284,12 +323,23 @@ func TestValues(t *testing.T) {
 		"list": a1,
 		"bool": b1,
 	}
+	var o0 *JsonObject
 	o1 := NewJsonObject(os)
-	o1.Insert("new", NewJsonInt(-35))
+	o1.Value()
 	// o1.Insert("self", o1) // he-he...
 	o2 := new(JsonObject)
+	if !o2.IsNull() {
+		t.Errorf("object: not (%+q).IsNull()", o2.Json())
+	}
+	if !o2.Equal(o0) {
+		t.Errorf("object: %q != %q", o2.Json(), o0.Json())
+	}
+	o1.Insert("new", NewJsonInt(-35))
+	if o2.Equal(o1) {
+		t.Errorf("object: %q == %q", o2.Json(), o1.Json())
+	}
 	if e := o2.Parse(o1.Json()); e != nil {
-		t.Errorf("string: Parse(%+q): %v", o1.Json(), e)
+		t.Errorf("object: Parse(%+q): %v", o1.Json(), e)
 	}
 	if !o1.Equal(o2) {
 		fmt.Println(o1.Json())
@@ -299,6 +349,45 @@ func TestValues(t *testing.T) {
 	o2.Insert("other", o1)
 	if o1.Equal(o2) {
 		t.Errorf("object: Equal(): %q != %q", o1.Json(), o2.Json())
+	}
+	if e := o2.Parse(`x`); e == nil {
+		t.Errorf("object: Parse(junk): no error")
+	}
+	if e := o2.Parse(`{"x":1},`); e == nil {
+		t.Errorf("object: Parse(tail): no error")
+	}
+	o2.Set(*o1)
+	if !o2.Equal(o1) {
+		fmt.Println(o1.Json())
+		fmt.Println(o2.Json())
+		t.Errorf("object: %q != %q", o2.Json(), o1.Json())
+	}
+	o2.Set(o1)
+	if !o2.Equal(o1) {
+		fmt.Println(o1.Json())
+		fmt.Println(o2.Json())
+		t.Errorf("object: %q != %q", o2.Json(), o1.Json())
+	}
+	o2.Set(o1.Value())
+	if !o2.Equal(o1) {
+		fmt.Println(o1.Json())
+		fmt.Println(o2.Json())
+		t.Errorf("object: %q != %q", o2.Json(), o1.Json())
+	}
+	o1.Insert("diff", new(JsonInt))
+	o2.Insert("diff", NewJsonInt(1))
+	if o2.Equal(o1) {
+		fmt.Println(o1.Json())
+		fmt.Println(o2.Json())
+		t.Errorf("object: %q == %q", o2.Json(), o1.Json())
+	}
+	o2.Set(o1.Value())
+	o1.Insert("xx1", NewJsonInt(1))
+	o2.Insert("xx2", NewJsonInt(1))
+	if o2.Equal(o1) {
+		fmt.Println(o1.Json())
+		fmt.Println(o2.Json())
+		t.Errorf("object: %q == %q", o2.Json(), o1.Json())
 	}
 
 }

@@ -41,6 +41,6 @@ The `.Equal()` compares the two `JsonValue`s to be equal.
 
 on a *Intel(R) Core(TM) i5-6600 CPU @ 3.30GHz* box.
 
-coverage: 88.8% of statements
+coverage: 100% of statements
 
 # EOF #
