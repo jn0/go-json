@@ -26,7 +26,7 @@ The `JsonArray` can be `.Append()`ed and `JsonObject` has `.Insert()` method.
 Any other `JsonValue` considered *immutable* (one can *replace* it with `.Set()`
 method). The `.Set()` method accepts a "compatible" value or a `string`. The
 "compatibility" means that you can use either `float32` or `float64` as value
-for `JsonFloat` and so on. The `string`s are `.Parse()`d.
+for `JsonFloat` and so on. The `string`s are `.Parse()`d, while not `.Set()` into a `JsonString`.
 
 The `.Value()` returns "unJSONed" version of that `JsonValue` (type cast still needed).
 
