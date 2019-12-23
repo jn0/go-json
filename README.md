@@ -10,12 +10,13 @@ in some uniform way from different sources (yepp, sorta system monitor agent).
 The point is to have special types for JSON entities that boil down to
 [`JsonValue`](json_values.go#L19) type:
 
-  - `JsonInt`
+  - `JsonInt` (no, Ints aren't "sorta floats")
   - `JsonFloat`
   - `JsonBool`
-  - `JsonString`
+  - `JsonString` (all escapes, including \uXXXX are ok on input)
   - `JsonArray`
   - `JsonObject`
+  - no separate type for `null`, anyone can be.
 
 Any `JsonValue` has `.Json()` method to get a `string` representation of that
 value suitable to send over, say, HTTP POST method.
